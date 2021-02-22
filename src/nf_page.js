@@ -2205,6 +2205,29 @@ class FieldSelect extends React.Component {
         return options;
     }
 
+    async load_names(ids,cb) {
+        console.log("FieldSelect.load_names",ids);
+        if (!query) query="";
+        var el_props=this.state.el_props;
+        if (el_props.load_names) {
+            var ctx=Object.assign({},this.props.context);
+            Object.assign(ctx,ctx.data||{});
+            ctx.ids=ids;
+            try {
+                var promise=this.props.root.code_eval(el_props.load_names,ctx);
+            } catch (err) {
+                console.error(err);
+            }
+            console.log("=> FieldSelect promise",promise);
+            return promise;
+        }
+        var method="name_get";
+        var data=await rpc.execute(el_props.model,method,[ids],{});
+        var options=data.map(o=>{return {label:t(o[1]),value:o[0]}});
+        console.log("=> options",options);
+        return options;
+    }
+
     render() {
         console.log("FieldSelect.render",this.state.el_props.name,this.state.selected_option,this.state);
         if (!this._mounted) return <div/>;
@@ -2318,10 +2341,9 @@ class FieldSelect extends React.Component {
             this.setState({selected_option:opt});
         } else {
             if (!this.state.selected_option || this.state.selected_option.value!=val_id) {
-                var data=await rpc.execute(el_props.model,"name_get",[[val_id]],{});
-                console.log("name_get",val_id,"=>",data);
-                var name=data[0][1];
-                this.setState({selected_option:{value:val_id,label:name}});
+                var res=await this.load_names([val_id]);
+                var option=res[0];
+                this.setState({selected_option:option});
             }
         }
     }
