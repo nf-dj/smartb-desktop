@@ -3285,10 +3285,10 @@ class PageContainer extends React.Component {
         //console.log("PageContainer.constructor",props);
         super(props);
         var page=props.page||"index";
-        var dbname="nfo_topfruits";
+        //var dbname="nfo_topfruits";
         var base_url="https://backend-prod2.netforce.com";
         rpc.set_base_url(base_url);
-        rpc.set_database(dbname);
+        //rpc.set_database(dbname);
         this.state={
             page: page,
             page_params: {},
@@ -3361,6 +3361,13 @@ class PageContainer extends React.Component {
 
     render() {
         console.log("PageContainer.render");
+        if (!this.state.dbname) {
+            return <div>
+                Select database:
+                <input type="text" value={this.state.db_input} onChange={e=>this.setState({db_input:e.value})}/> .smartb.co
+                <button onClick={this.select_db.bind(this)}>Confirm</button/>
+            </div>;
+        }
         if (!this.pages) return <Loading/>;
         var page_info=this.get_page(this.state.page);
         if (!page_info) {
@@ -3412,6 +3419,16 @@ class PageContainer extends React.Component {
         var page_info=pages[page];
 		return page_info;
 	}
+
+    select_db() {
+        var db=this.state.db_input;
+        if (!db) {
+            alert("Missing db name");
+            return;
+        }
+        rpc.set_database(dbname);
+        this.setState({dbname:db});
+    }
 }
 
 export default PageContainer;
