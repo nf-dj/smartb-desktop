@@ -25,6 +25,7 @@ import Dexie from "dexie";
 var electron=require("electron");
 window.electron=electron;
 
+const dialog = require('electron').remote.dialog;
 const serialport = require( "electron" ).remote.require( "serialport" );
 window.serialport=serialport;
 
@@ -3096,6 +3097,7 @@ class Page extends React.Component {
             fields: fields,
             get_model: get_model,
             serialport: serialport,
+            dialog: dialog,
         };
         this.code_eval=(expr,ctx)=>{
             //console.log("code_eval",this.props.page,expr,ctx);
@@ -3286,15 +3288,24 @@ class PageContainer extends React.Component {
         super(props);
         var page=props.page||"index";
         //var dbname="nfo_topfruits";
+        var dbname=localStorage.getItem("dbname");
         var base_url="https://backend-prod2.netforce.com";
         rpc.set_base_url(base_url);
-        //rpc.set_database(dbname);
+        rpc.set_database(dbname);
         this.state={
+            dbname: dbname,
             page: page,
             page_params: {},
         };
         this.key=0;
         init_db("nf_page_db");
+        //var resize_t=_.throttle(this.resize.bind(this),1000);
+        //window.addEventListener("resize",resize_t);
+    }
+
+    resize() {
+        console.log("resize");
+        this.forceUpdate();
     }
 
     async load_pages(page_group) {
@@ -3364,8 +3375,8 @@ class PageContainer extends React.Component {
         if (!this.state.dbname) {
             return <div>
                 Select database:
-                <input type="text" value={this.state.db_input} onChange={e=>this.setState({db_input:e.value})}/> .smartb.co
-                <button onClick={this.select_db.bind(this)}>Confirm</button/>
+                <input type="text" value={this.state.db_input||""} onChange={e=>this.setState({db_input:e.target.value})}/> .smartb.co
+                <button onClick={this.select_db.bind(this)}>Confirm</button>
             </div>;
         }
         if (!this.pages) return <Loading/>;
@@ -3426,8 +3437,10 @@ class PageContainer extends React.Component {
             alert("Missing db name");
             return;
         }
+        var dbname="nfo_"+db;
         rpc.set_database(dbname);
-        this.setState({dbname:db});
+        this.setState({dbname:dbname});
+        localStorage.setItem("dbname",dbname);
     }
 }
 
