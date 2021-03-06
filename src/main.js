@@ -1,6 +1,7 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const { ipcMain } = require('electron')
+const fs = require('fs')
 
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -70,7 +71,13 @@ ipcMain.on('print_page', (event, page, params, print_opts) => {
         console.log("print window",print_win);
         var printers=print_win.webContents.getPrinters();
         console.log("printers",printers);
-        print_win.webContents.print(print_opts);
+        if (print_opts.pdf_path) {
+            print_win.webContents.printToPDF(print_opts).then(data=>{
+                fs.writeFile(pdf_path,data);
+            });
+        } else {
+            print_win.webContents.print(print_opts);
+        }
         console.log("printed");
         setTimeout(()=>{
             print_win.close();
