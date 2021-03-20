@@ -1463,6 +1463,11 @@ class Field extends React.Component {
         if (!this.refs.field) throw new Error("Missing field ref");
         this.refs.field.set_props(props);
     }
+
+    focus() {
+        if (!this.refs.field) throw new Error("Missing field ref");
+        this.refs.field.focus();
+    }
 }
 
 class FieldText extends React.Component {
@@ -1504,7 +1509,7 @@ class FieldText extends React.Component {
         var name="text"
         if (el_props.name) { name=el_props.name; }
         return <div>
-            <input type="text" name={name} className={classNames("form-control",{"is-invalid":this.state.error!=null})} placeholder={t(el_props.placeholder)} style={style} value={this.state.value||""} onChange={this.on_change.bind(this)} onBlur={this.on_blur.bind(this)} onKeyDown={this.on_key_down.bind(this)}/>
+            <input type="text" name={name} className={classNames("form-control",{"is-invalid":this.state.error!=null})} placeholder={t(el_props.placeholder)} style={style} value={this.state.value||""} onChange={this.on_change.bind(this)} onBlur={this.on_blur.bind(this)} onKeyDown={this.on_key_down.bind(this)} ref={el=>this.input=el}/>
             {(()=>{
                 if (!this.state.error) return;
                 return <div className="invalid-feedback">
@@ -1566,6 +1571,10 @@ class FieldText extends React.Component {
                 });
             }
         }
+    }
+
+    focus() {
+        this.input.focus();
     }
 }
 
