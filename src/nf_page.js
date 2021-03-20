@@ -3107,6 +3107,8 @@ class Page extends React.Component {
             get_model: get_model,
             serialport: serialport,
             dialog: dialog,
+            set_offline: this.set_offline.bind(this),
+            get_offline: this.get_offline.bind(this),
         };
         this.code_eval=(expr,ctx)=>{
             //console.log("code_eval",this.props.page,expr,ctx);
@@ -3286,6 +3288,19 @@ class Page extends React.Component {
             })()}
         </div>;
     }
+
+    set_offline(offline) {
+        if (offline) {
+            localStorage.setItem("offline","1");
+        } else {
+            localStorage.setItem("offline","");
+        }
+    }
+
+    get_offline() {
+        var val=localStorage.getItem("offline");
+        return val?true:false;
+    }
 }
 
 var _site_params=null;
@@ -3310,6 +3325,36 @@ class PageContainer extends React.Component {
         init_db("nf_page_db");
         //var resize_t=_.throttle(this.resize.bind(this),1000);
         //window.addEventListener("resize",resize_t);
+        window.addEventListener("offline",this.check_offline.bind(this));
+        this.check_online_int=setInterval(this.check_online.bind(this),10*60*1000);
+    }
+
+    check_offline() {
+        if (!navigator.onLine) { 
+            console.log("=> set offline");
+            this.set_offline(true);
+        }
+    }
+
+    check_online() {
+        console.log("check_online");
+        if (navigator.onLine) {
+            console.log("=> set online");
+            this.set_offline(false);
+        }
+    }
+
+    set_offline(offline) {
+        if (offline) {
+            localStorage.setItem("offline","1");
+        } else {
+            localStorage.setItem("offline","");
+        }
+    }
+
+    get_offline() {
+        var val=localStorage.getItem("offline");
+        return val?true:false;
     }
 
     resize() {
@@ -3319,7 +3364,19 @@ class PageContainer extends React.Component {
 
     async load_pages(page_group) {
         console.log("load_pages");
-        try {
+        var offline=this.get_offline();
+        if (offline) {
+            console.log("Loading pages offline...");
+            var res=await get_model("page.layout").search_read([],["path","layout","code"]);
+            console.log("=> "+res.length+" pages loaded from db");
+            var pages={};
+            for (var r of res) {
+                pages[r.path]=r;
+            }
+            console.log("=> pages",pages);
+            this.pages=pages;
+        } else {
+            console.log("Loading pages online...");
             var cond=[];
             if (page_group) cond.push(["group_id.code","=",page_group]);
             var fields=["path","layout","code","model_id.name"];
@@ -3340,16 +3397,6 @@ class PageContainer extends React.Component {
                 };
                 get_model("page.layout").merge(vals);
             }
-        } catch (err) {
-            console.log("Failed to load online pages => trying load offline...");
-            var res=await get_model("page.layout").search_read([],["path","layout","code"]);
-            console.log("=> "+res.length+" pages loaded from db");
-            var pages={};
-            for (var r of res) {
-                pages[r.path]=r;
-            }
-            console.log("=> pages",pages);
-            this.pages=pages;
         }
         this.forceUpdate();
     }
@@ -3377,6 +3424,9 @@ class PageContainer extends React.Component {
 
     componentWillUnmount() {
         console.log("PageContainer.componentWillUnmount");
+        if (this.check_online_int) {
+            clearInterval(this.check_online_int);
+        }
     }
 
     render() {
