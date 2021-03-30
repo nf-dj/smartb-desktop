@@ -21,6 +21,7 @@ var i18n=require("./i18n");
 var t=i18n.translate;
 import {Model,fields,get_model,init_db,get_db} from "./model";
 import Dexie from "dexie";
+var Modal = require('react-bootstrap').Modal;
 
 var electron=require("electron");
 window.electron=electron;
@@ -3096,6 +3097,8 @@ class Page extends React.Component {
             redirect: this.redirect.bind(this),
             redirect_post: this.redirect_post.bind(this),
             set_page: this.set_page.bind(this),
+            show_popup: this.show_popup.bind(this),
+            close_popup: this.close_popup.bind(this),
             print_page: this.print_page.bind(this),
             page_params: this.props,
             get_component: this.get_component.bind(this),
@@ -3265,6 +3268,16 @@ class Page extends React.Component {
         //setTimeout(()=>{
             window.scrollTo(0,0);
         //},200);
+    }
+
+    show_popup(page,params) {
+        console.log("show_popup",page,params);
+        this.props.container.set_popup_page(page,params);
+    }
+
+    close_popup() {
+        console.log("close_popup");
+        this.props.container.set_popup_page(null);
     }
 
     print_page(page,params,print_opts) {
@@ -3463,6 +3476,14 @@ class PageContainer extends React.Component {
         var style={display:"flex",flexDirection:"column"};
         return <div style={style}>
         	<Page key={this.key} page={this.state.page} container={this} {...this.state.page_params} data={this.props.data}/>
+			{(()=>{
+				if (!this.state.popup_page) return;
+				return <Modal show>
+					<Modal.Body>
+						<Page key={this.popup_key} page={this.state.popup_page} container={this} {...this.state.popup_page_params} data={this.props.data}/>
+					</Modal.Body>
+				</Modal>;
+			})()}
         </div>;
     }
 
@@ -3477,6 +3498,12 @@ class PageContainer extends React.Component {
         }
         /*console.log("router push",Router.pathname,url);
         Router.push(Router.pathname,url,{shallow:true});*/
+    }
+
+    set_popup_page(page,params) {
+        console.log("PageContainer.set_popup_page",page,params);
+        this.popup_key+=1;
+        this.setState({popup_page:page,popup_page_params:params||{}});
     }
 
 	get_page(page) {
