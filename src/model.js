@@ -237,7 +237,7 @@ export class Model {
                     return;
                 }
             } else if (op=="in") {
-                if (!_.includes(val,val)) {
+                if (!_.includes(val,obj[name])) {
                     match=false;
                     break;
                 }
