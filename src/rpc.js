@@ -11,9 +11,19 @@ export function set_base_url(base_url) {
     _rpc_base_url=base_url;
 }
 
+export function clear_base_url() { //Max 3rd Mac 2021
+    console.log("rpc.clear_base_url",_rpc_base_url);
+    _rpc_base_url=null;
+}
+
 export function set_database(dbname) {
     console.log("rpc.set_database",dbname);
     _database=dbname;
+}
+
+export function clear_database() { //Max 3rd Mac 2021
+    console.log("rpc.clear_database",_database);
+    _database=null;
 }
 
 export function set_user(user_id,token) {

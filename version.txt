@@ -1,0 +1,3 @@
+version 24: 
+
+1. added check online every n-interval event listener function. Callback stores "offline" boolean at local storage.

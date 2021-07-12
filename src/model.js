@@ -15,7 +15,15 @@ export function get_db() {
     return db;
 }
 
-var models={};
+export function clear_db() {
+    db.delete().then(() => {
+        console.log("Database successfully deleted");
+    }).catch((err) => {
+        console.error("Could not delete database");
+    }).finally(() => {
+        return;
+    });
+}
 
 export function get_model(name) {
     var m=models[name];

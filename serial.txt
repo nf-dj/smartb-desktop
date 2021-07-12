@@ -1,0 +1,4 @@
+ .\out\smartb_desktop-win32-x64\resources\app
+npm i serialport
+npm install --save-dev electron-rebuild
+.\node_modules\.bin\electron-rebuild.cmd

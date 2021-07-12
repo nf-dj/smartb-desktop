@@ -1,5 +1,4 @@
 import 'bootstrap/dist/css/bootstrap.css';
-import Tooltip from "@material-ui/core/Tooltip";
 
 var React=require("react");
 var ReactDOM=require("react-dom");
@@ -20,9 +19,8 @@ var Barcode = require('react-barcode');
 //var number_to_words=require("number-to-words");
 var i18n=require("./i18n");
 var t=i18n.translate;
-import {Model,fields,get_model,init_db,get_db,clear_db} from "./model";
+import {Model,fields,get_model,init_db,get_db} from "./model";
 import Dexie from "dexie";
-var Modal = require('react-bootstrap').Modal;
 
 var electron=require("electron");
 window.electron=electron;
@@ -35,7 +33,7 @@ const dialog = require('electron').remote.dialog;
 var crypto = require('crypto');
 //window.crypto=crypto; //no need to attach to window => see moment library example
 var util = require('util');
-const {getCurrentWindow} = require('electron').remote;
+
 //import OwlCarousel from 'react-owl-carousel';  
 //import 'owl.carousel/dist/assets/owl.carousel.css';  
 //import 'owl.carousel/dist/assets/owl.theme.default.css'; 
@@ -437,8 +435,7 @@ class Box extends React.Component {
 
 class Loading extends React.Component {
     render() {
-        return <div style={{display:"flex",flexDirection:"column",alignItems:"center",position: 'absolute', left: '50%', top: '50%',
-        transform: 'translate(-50%, -50%)'}}>
+        return <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
             {(()=>{
                 var type=this.props.type||"bar";
                 var color=this.props.color;
@@ -1118,7 +1115,6 @@ class Image extends React.Component {
         style.borderRadius=el_props.border_radius||0;
         if (el_props.border_color) style.borderColor=el_props.border_color;
         var link_url=el_props.link_url;
-        var comp_name = el_props.name;//xxx
         var ctx=this.props.context||{};
         var data=ctx.data||{};
         var url=null;
@@ -1146,11 +1142,7 @@ class Image extends React.Component {
                 if (link_url) {
                     return <a href={link_url} target={el_props.link_target}><img src={url} style={style}/></a>
                 } else {
-                    return (
-                        <Tooltip title={comp_name}>
-                            <img src={url} style={style}/>
-                        </Tooltip>
-                        )  
+                    return <img src={url} style={style}/>
                 }
             })()}
             {(()=>{
@@ -1476,11 +1468,6 @@ class Field extends React.Component {
         if (!this.refs.field) throw new Error("Missing field ref");
         this.refs.field.set_props(props);
     }
-
-    focus() {
-        if (!this.refs.field) throw new Error("Missing field ref");
-        this.refs.field.focus();
-    }
 }
 
 class FieldText extends React.Component {
@@ -1522,7 +1509,7 @@ class FieldText extends React.Component {
         var name="text"
         if (el_props.name) { name=el_props.name; }
         return <div>
-            <input type="text" name={name} className={classNames("form-control",{"is-invalid":this.state.error!=null})} placeholder={t(el_props.placeholder)} style={style} value={this.state.value||""} onChange={this.on_change.bind(this)} onBlur={this.on_blur.bind(this)} onKeyDown={this.on_key_down.bind(this)} ref={el=>this.input=el}/>
+            <input type="text" name={name} className={classNames("form-control",{"is-invalid":this.state.error!=null})} placeholder={t(el_props.placeholder)} style={style} value={this.state.value||""} onChange={this.on_change.bind(this)} onBlur={this.on_blur.bind(this)} onKeyDown={this.on_key_down.bind(this)}/>
             {(()=>{
                 if (!this.state.error) return;
                 return <div className="invalid-feedback">
@@ -1585,16 +1572,6 @@ class FieldText extends React.Component {
             }
         }
     }
-
-    focus() {
-        this.input.focus();
-    }
-    
-/*     on_barcode(e) {
-        console.log("FieldText.on_barcode");
-        var val=e.target.value;
-        this.setState({value:val});
-    }  */
 }
 
 class FieldTextArea extends React.Component {
@@ -3120,17 +3097,12 @@ class Page extends React.Component {
             redirect: this.redirect.bind(this),
             redirect_post: this.redirect_post.bind(this),
             set_page: this.set_page.bind(this),
-            show_popup: this.show_popup.bind(this),
-            close_popup: this.close_popup.bind(this),
             print_page: this.print_page.bind(this),
             page_params: this.props,
             get_component: this.get_component.bind(this),
             set_language: this.set_language.bind(this),
             translate: this.translate.bind(this),
             update_title: this.update_title.bind(this),
-            change_db: this.change_db.bind(this),
-            clear_db: clear_db,
-            clear_local_data: this.clear_local_data.bind(this),
             Model: Model,
             fields: fields,
             get_model: get_model,
@@ -3138,8 +3110,6 @@ class Page extends React.Component {
             dialog: dialog,
             crypto: crypto,
             util: util,
-            set_offline: this.set_offline.bind(this),
-            get_offline: this.get_offline.bind(this),
         };
         this.code_eval=(expr,ctx)=>{
             //console.log("code_eval",this.props.page,expr,ctx);
@@ -3204,9 +3174,7 @@ class Page extends React.Component {
     }
 
     get_component(name) {
-        console.log("All Components",this.components);
         var comp=this.components[name];
-        console.log("Retrieved Component",comp);
         if (!comp) {
             console.error("component not found",name);
             return;
@@ -3299,33 +3267,10 @@ class Page extends React.Component {
             window.scrollTo(0,0);
         //},200);
     }
-    show_popup(page,params) {
-        console.log("show_popup",page,params);
-        this.props.container.set_popup_page(page,params);
-    }
-
-    close_popup() {
-        console.log("close_popup");
-        this.props.container.set_popup_page(null);
-    }
 
     print_page(page,params,print_opts) {
         console.log("Page.print_page",page,params,print_opts);
         electron.ipcRenderer.send("print_page",page,params,print_opts);
-    }
-
-    //select_db=PageContainer.select_db.bind(this);
-    change_db() {
-        this.clear_cookie("dbname");
-        clear_db();
-        rpc.clear_base_url();
-        rpc.clear_database();
-        getCurrentWindow().reload();
-    }
-
-    clear_local_data() {
-        clear_db();
-        getCurrentWindow().reload();
     }
 
     render() {
@@ -3344,19 +3289,6 @@ class Page extends React.Component {
             })()}
         </div>;
     }
-
-    set_offline(offline) {
-        if (offline) {
-            localStorage.setItem("offline","1");
-        } else {
-            localStorage.setItem("offline","");
-        }
-    }
-
-    get_offline() {
-        var val=localStorage.getItem("offline");
-        return val?true:false;
-    }
 }
 
 var _site_params=null;
@@ -3367,74 +3299,21 @@ class PageContainer extends React.Component {
         //console.log("PageContainer.constructor",props);
         super(props);
         var page=props.page||"index";
-        //var dbname="nfo_topfruits";
-        var dbname=localStorage.getItem("dbname");
+        var dbname="nfo_topfruits_test";
         var base_url="https://backend-prod2.netforce.com";
         rpc.set_base_url(base_url);
         rpc.set_database(dbname);
         this.state={
-            dbname: dbname,
             page: page,
             page_params: {},
         };
         this.key=0;
         init_db("nf_page_db");
-        //var resize_t=_.throttle(this.resize.bind(this),1000);
-        //window.addEventListener("resize",resize_t);
-        window.addEventListener("offline",this.check_offline.bind(this));
-        const minutes = 10;
-        //const minutes = 1/60;
-        this.check_online_int=setInterval(this.check_online.bind(this),minutes*60*1000); //check internet status every 1.000 second
-    }
-
-    check_offline() {
-        if (!navigator.onLine) { 
-            console.log("=> set offline");
-            this.set_offline(true);
-        }
-    }
-
-    check_online() {
-        console.log("check_online");
-        if (navigator.onLine) {
-            console.log("=> set online");
-            this.set_offline(false);
-        }
-    }
-
-    set_offline(offline) {
-        if (offline) {
-            localStorage.setItem("offline","1");
-        } else {
-            localStorage.setItem("offline","");
-        }
-    }
-
-    get_offline() {
-        var val=localStorage.getItem("offline");
-        return val?true:false;
-    }
-
-    resize() {
-        console.log("resize");
-        this.forceUpdate();
     }
 
     async load_pages(page_group) {
         console.log("load_pages");
-        var offline=this.get_offline();
-        if (offline) {
-            console.log("Loading pages offline...");
-            var res=await get_model("page.layout").search_read([],["path","layout","code"]);
-            console.log("=> "+res.length+" pages loaded from db");
-            var pages={};
-            for (var r of res) {
-                pages[r.path]=r;
-            }
-            console.log("=> pages",pages);
-            this.pages=pages;
-        } else {
-            console.log("Loading pages online...");
+        try {
             var cond=[];
             if (page_group) cond.push(["group_id.code","=",page_group]);
             var fields=["path","layout","code","model_id.name"];
@@ -3455,7 +3334,17 @@ class PageContainer extends React.Component {
                 };
                 get_model("page.layout").merge(vals);
             }
+        } catch (err) {
+            console.log("Failed to load online pages => trying load offline...");
+            var res=await get_model("page.layout").search_read([],["path","layout","code"]);
+            console.log("=> "+res.length+" pages loaded from db");
+            var pages={};
+            for (var r of res) {
+                pages[r.path]=r;
             }
+            console.log("=> pages",pages);
+            this.pages=pages;
+        }
         this.forceUpdate();
     }
 
@@ -3482,32 +3371,21 @@ class PageContainer extends React.Component {
 
     componentWillUnmount() {
         console.log("PageContainer.componentWillUnmount");
-        if (this.check_online_int) {
-            clearInterval(this.check_online_int);
-        }
     }
 
     render() {
-        console.log("PageContainer.render"); 
+        console.log("PageContainer.render"); /*
         if (!this.state.dbname) {
-            const custom_style = {
-                div    : {position: 'absolute', left: '40%', top: '40%', transform: 'translate(-40%,-40%)'},
-                //button : {justifyContent: "center", alignSelf: 'center' /*,alignItems: "center"*/},
-                button : {position: 'absolute', left: '50%', top: '50%',}
-            }
             return <div>
-                <div style={custom_style.div}>
-                    {" "}Select database{" "}:{"  "}
-                    <br/><br/>
-                    <input type="text" value={this.state.db_input} onChange={e=>{
-                        this.setState({db_input:e.target.value})
-                    }}/>{" "}.smartb.co
-                    <br/> <br/>
-                </div>
-                
-                <button style={custom_style.button} onClick={this.select_db.bind(this)}>{" "}Confirm{" "}</button>
+                Select database:
+                <input type="text" value={this.state.db_input} onChange={e=>{
+                    console.log("input parameter",e)
+                    this.setState({db_input:e.target.value})
+                    console.log("updated state : ",this.state)
+                }}/> .smartb.co
+                <button onClick={this.select_db.bind(this)}>Confirm</button>
             </div>;
-        }
+        }*/
         if (!this.pages) return <Loading/>;
         var page_info=this.get_page(this.state.page);
         if (!page_info) {
@@ -3532,24 +3410,13 @@ class PageContainer extends React.Component {
         title=replace_field_values(title,{});
         var style={display:"flex",flexDirection:"column"};
         return <div style={style}>
-            {(()=>{
+		{(()=>{
 			if (!layout.custom_css) return;
 			return <style dangerouslySetInnerHTML={{__html:layout.custom_css}}/>;
 		})()}
-		<Page key={this.key} page={this.state.page} container={this} {...this.state.page_params} data={this.props.data}/>
-			{(()=>{
-				if (!this.state.popup_page) return;
-				return <Modal show onHide={() => this.setState({popup_page: null})} size="lg">
-                    <Modal.Header closeButton>
-                        <Modal.Title>SmartB</Modal.Title>
-                    </Modal.Header>
-					<Modal.Body>
-						<Page key={this.popup_key} page={this.state.popup_page} container={this} {...this.state.popup_page_params} data={this.props.data}/>
-					</Modal.Body>
-				</Modal>;
-			})()}
+        	<Page key={this.key} page={this.state.page} container={this} {...this.state.page_params} data={this.props.data}/>
         </div>;
-    }   
+    }
 
     set_page(page,params) {
         console.log("PageContainer.set_page",page,params);
@@ -3564,12 +3431,6 @@ class PageContainer extends React.Component {
         Router.push(Router.pathname,url,{shallow:true});*/
     }
 
-    set_popup_page(page,params) {
-        console.log("PageContainer.set_popup_page",page,params);
-        this.popup_key+=1;
-        this.setState({popup_page:page,popup_page_params:params||{}});
-    }
-
 	get_page(page) {
 		console.log("PageContainer.get_page",page);
         var pages=this.pages;
@@ -3580,14 +3441,14 @@ class PageContainer extends React.Component {
         var page_info=pages[page];
 		return page_info;
 	}
-    
+    /*
     select_db() {
         var db=this.state.db_input;
         if (!db) {
             alert("Missing db name");
             return;
         }
-        let dbname = "nfo_"+db.replace(/-/g,"_").toLowerCase(); /*
+        let dbname;
         if(db=="topfruits") {
             dbname = "nfo_topfruits";
         }
@@ -3598,19 +3459,11 @@ class PageContainer extends React.Component {
             dbname = "nfo_fecc";
         } else{
             alert("invalid dbname");
-        } */
-        localStorage.setItem("dbname",dbname);
-        this.setState({dbname:dbname}); //setState will re-render
-        this.load_pages(this.props.page_group);
-        getCurrentWindow().reload()
-        //this.reload_window();
-    }
-    /*
-    reload_window() {
-        console.log("reloading window")
-        //getCurrentWindow().reload();
-        getCurrentWindow().loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-    } */
+        }
+        rpc.set_database(dbname);
+        this.setState({dbname:dbname});
+        init_db("nf_page_db");
+    }*/
 }
 
 export default PageContainer;
